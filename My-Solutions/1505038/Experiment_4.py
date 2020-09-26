@@ -229,6 +229,21 @@ class DepartureEvent(Event):
         self.eventTime = eventTime
         self.eventType = 'DEPARTURE'
 
+    def balanceQueue(self, idx, sim):
+        # left queue is valid and length is not 0
+        if idx - 1 >= 0 and len(sim.states.queue[idx - 1]):
+            while len(sim.states.queue[idx - 1]) - len(sim.states.queue[idx]) >= 2:
+                toMove = sim.states.queue[idx - 1].pop()
+                sim.states.queue[idx].append(toMove)
+
+            # right queue is valid and length not 0
+        if idx + 1 < sim.params.k and len(sim.states.queue[idx + 1]):
+            while len(sim.states.queue[idx + 1]) - len(sim.states.queue[idx]) >= 2:
+                toMove = sim.states.queue[idx + 1].pop()
+                sim.states.queue[idx].append(toMove)
+
+        return sim
+
     def process(self, sim):
         # Complete this function
         idx = -1
@@ -253,19 +268,9 @@ class DepartureEvent(Event):
 
         if idx != -1:
             # each queue difference will be maximum 2 length
-            # left queue is valid and length is not 0
-            if idx - 1 >= 0 and len(sim.states.queue[idx - 1]):
-                while len(sim.states.queue[idx - 1]) - len(sim.states.queue[idx]) >= 2:
-                    x = sim.states.queue[idx - 1].pop()
-                    sim.states.queue[idx].append(x)
+            sim = self.balanceQueue(idx, sim)
 
-            # right queue is valid and length not 0
-            if idx + 1 < sim.params.k and len(sim.states.queue[idx + 1]):
-                while len(sim.states.queue[idx + 1]) - len(sim.states.queue[idx]) >= 2:
-                    x = sim.states.queue[idx + 1].pop()
-                    sim.states.queue[idx].append(x)
-
-        # check if you can serve after q change
+            # check if you can serve after q change
         for i in range(sim.params.k):
             if sim.states.multiServerStatus[i] == IDLE:
                 # check if there is someone in the q
